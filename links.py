@@ -42,6 +42,12 @@ global_options = [
             value="discord-linkspanel"
         ),
         disnake.SelectOption(
+            label="GitHub",
+            description="Official GitHub for Geek Room",
+            emoji="🧑‍💻",
+            value="github-linkspanel"
+        ),
+        disnake.SelectOption(
             label="Nas.io Community",
             description="Geek Room's Nas.io community page",
             emoji="🎯",
@@ -65,6 +71,7 @@ global_options = [
             emoji="🌴",
             value="linktree-linkspanel"
         )
+        
     ]
 
 # Bot ready event to fetch bot details
@@ -108,6 +115,42 @@ async def handle_linktree(inter: disnake.MessageInteraction):
     
     # Edit the original message with the new embed and action rows
     await inter.message.edit(embed=embed, components=[row2, row])
+    
+
+async def handle_github(inter: disnake.MessageInteraction):
+    await inter.response.defer()
+    
+    # Create the action row for the select menu
+    row2 = disnake.ui.ActionRow(
+        disnake.ui.Select(
+            placeholder="❌┆Links",
+            options=global_options,
+            custom_id="Bot-linkspanel"
+        )
+    )
+
+    # Create the action row for the bot invite button
+    row = disnake.ui.ActionRow(
+        disnake.ui.Button(
+            label="Geek Room Github",
+            url="https://linktr.ee/geekroom",
+            style=disnake.ButtonStyle.link
+        )
+    )
+
+    # Create the embed
+    embed = disnake.Embed(
+        title="🧑‍💻・Geek Room Github",
+        description="Geek Room's official Github page ",
+        color=0x3498db,
+        url = "https://github.com/Geek-Room01"
+    )
+    embed.set_author(name=f"@geekroom",icon_url="https://ugc.production.linktr.ee/2a6c8d7a-a38a-45c4-9e9f-4a14b6c88714_GR-Logo.png?io=true&size=avatar-v3_0")
+    embed.set_footer(text= f"Chinku • Today at {current_time}",icon_url=bot_icon_url)
+    
+    # Edit the original message with the new embed and action rows
+    await inter.message.edit(embed=embed, components=[row2, row])
+
 async def handle_insta(inter: disnake.MessageInteraction):
     await inter.response.defer()
     
@@ -137,7 +180,7 @@ async def handle_insta(inter: disnake.MessageInteraction):
         url = "https://instagram.com/geekr00m"
     )
     embed.set_author(name=f"@geekroom",icon_url="https://ugc.production.linktr.ee/2a6c8d7a-a38a-45c4-9e9f-4a14b6c88714_GR-Logo.png?io=true&size=avatar-v3_0")
-    embed.set_footer(text= f"Dogroom • Today at {current_time}",icon_url=bot_icon_url)
+    embed.set_footer(text= f"Chinku • Today at {current_time}",icon_url=bot_icon_url)
     
     # Edit the original message with the new embed and action rows
     await inter.message.edit(embed=embed, components=[row2, row])
@@ -172,7 +215,7 @@ async def handle_twitter(inter: disnake.MessageInteraction):
     )
     embed.set_author(name=f"@geekroom",icon_url="https://ugc.production.linktr.ee/2a6c8d7a-a38a-45c4-9e9f-4a14b6c88714_GR-Logo.png?io=true&size=avatar-v3_0")
      
-    embed.set_footer(text= f"Dogroom • Today at {current_time}",icon_url=bot_icon_url)
+    embed.set_footer(text= f"Chinku • Today at {current_time}",icon_url=bot_icon_url)
     
     # Edit the original message with the new embed and action rows
     await inter.message.edit(embed=embed, components=[row2, row])
@@ -208,7 +251,7 @@ async def handle_whatsapp(inter: disnake.MessageInteraction):
     )
     embed.set_author(name=f"@geekroom",icon_url="https://ugc.production.linktr.ee/2a6c8d7a-a38a-45c4-9e9f-4a14b6c88714_GR-Logo.png?io=true&size=avatar-v3_0")
      
-    embed.set_footer(text= f"Dogroom • Today at {current_time}",icon_url=bot_icon_url)
+    embed.set_footer(text= f"Chinku • Today at {current_time}",icon_url=bot_icon_url)
 
     # Edit the original message with the new embed and action rows
     await inter.message.edit(embed=embed, components=[row2, row])
@@ -243,7 +286,7 @@ async def handle_nas(inter: disnake.MessageInteraction):
     )
     embed.set_author(name=f"@geekroom",icon_url="https://ugc.production.linktr.ee/2a6c8d7a-a38a-45c4-9e9f-4a14b6c88714_GR-Logo.png?io=true&size=avatar-v3_0")
     
-    embed.set_footer(text= f"Dogroom • Today at {current_time}",icon_url=bot_icon_url)
+    embed.set_footer(text= f"Chinku • Today at {current_time}",icon_url=bot_icon_url)
  
 
     # Edit the original message with the new embed and action rows
@@ -280,7 +323,7 @@ async def handle_discord(inter: disnake.MessageInteraction):
     )
     embed.set_author(name=f"@geekroom",icon_url="https://ugc.production.linktr.ee/2a6c8d7a-a38a-45c4-9e9f-4a14b6c88714_GR-Logo.png?io=true&size=avatar-v3_0")
      
-    embed.set_footer(text= f"Dogroom • Today at {current_time}",icon_url=bot_icon_url)
+    embed.set_footer(text= f"Chinku • Today at {current_time}",icon_url=bot_icon_url)
    
 
     # Edit the original message with the new embed and action rows
@@ -316,7 +359,7 @@ async def handle_linkedin(inter: disnake.MessageInteraction):
         url = "https://www.linkedin.com/company/geekr00m/"
     )
     embed.set_author(name=f"@geekroom",icon_url="https://ugc.production.linktr.ee/2a6c8d7a-a38a-45c4-9e9f-4a14b6c88714_GR-Logo.png?io=true&size=avatar-v3_0")
-    embed.set_footer(text= f"Dogroom • Today at {current_time}",icon_url=bot_icon_url)
+    embed.set_footer(text= f"Chinku • Today at {current_time}",icon_url=bot_icon_url)
 
     # Edit the original message with the new embed and action rows
     await inter.message.edit(embed=embed, components=[row2, row])

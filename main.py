@@ -10,6 +10,7 @@ import links
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+print(TOKEN)
  
 intents = disnake.Intents.default()
 intents.message_content = True
@@ -25,11 +26,11 @@ qotdtarget = int(os.getenv('QOTD_TARGET'))#1116378200096907264#fill in  #varxqot
 riddlechannel = int(os.getenv('RIDDLECHANNEL'))
 #ID of role that gets pinged when posting a question, leave blank string if no role should be pinged
 pingrole = os.getenv('PINGROLE') #Member role ID for @DSA  #varxmember
-
+memechannel = int(os.getenv('MEMECHANNEL'))
 
 #Hour QOTD is to be posted
 posttime = int(os.getenv('POSTTIME'))
-
+ADMIN_ROLE_NAME  = ["Moderator","admin","core","GOD","coordinator"]
 embedcolor = disnake.Colour.green() 
 errorembedcolor = disnake.Colour.red()
 
@@ -39,6 +40,7 @@ from bs4 import BeautifulSoup
 import random
 import re
 from disnake import utils
+
 async def question_post(channel):
     #Scraping questions from leetecode
     # Send a GET request to the website
@@ -75,7 +77,8 @@ async def question_post(channel):
         colour=embedcolor
     )
     embed.add_field(name="Problem Link", value=f"[Click here]({link_without_number})")
-    embed.set_author(name="Today's problem:", icon_url='https://images.playground.com/85f17db5dc3a4b38acc26419711b6c4d.jpeg')#replace with any other/bot icon
+    embed.set_author(name="Today's problem:", 
+                     icon_url='https://images.playground.com/85f17db5dc3a4b38acc26419711b6c4d.jpeg')#replace with any other/bot icon
     embed.set_footer(text=f"Daily Question #{datetime.now().date()}")
 
     # Send the embed to the channel
@@ -95,7 +98,25 @@ async def question_post(channel):
 
 last_posted_date = None
 #Scheduled to call question of the day.
+def postmeme(channel):
+    try:
+        response = requests.get("https://meme-api.com/gimme/ProgrammerHumor")
+        data = response.json()
+        
+        
+        title = data['title']
+        image_url = data['url']
+        
+        
+        embed = disnake.Embed(title=title, color=disnake.Color.blue())
+        embed.set_image(url=image_url)
+        
+        
+        return embed
 
+    except Exception as e:
+        print(e)
+        return "Failed to fetch meme. Please try again later."
 
 @tasks.loop(hours = 1)
 async def task():
@@ -105,13 +126,17 @@ async def task():
         channel = Bot.get_channel(qotdtarget)
         await question_post(channel) #daily DSA
         last_posted_date = current_date
-        channel = Bot.get_channel(riddlechannel)
-        topics = ['Artificial Intelligence & Machine Learning','Cybersecurity','Robotics & IOT','DSA, Problem Solving and Aptitute']
-        for topic in topics:
-            await riddle_of_theday.question_post(channel,topic) #Riddle post
-        #question_post function posts DSA, whereas riddle_of_theday.question_post posts riddles
-            
-       
+        channel = Bot.get_channel(memechannel)
+        await channel.send(embed=postmeme(channel))
+
+        topicdict = {'Artificial Intelligence & Machine Learning':os.getenv('AICHANNEL'),
+                     'Cybersecurity':os.getenv('CYBCHANNEL'),
+                     'Robotics & IOT':os.getenv('IOTCHANNEL'),
+                     'DSA, Problem Solving and Aptitute':riddlechannel,
+                     'Web Development':os.getenv('WEBDEVCHANNEL')}
+        for topic,channel in topicdict.items():
+            await riddle_of_theday.question_post(Bot.get_channel(int(channel)),topic) #Riddle post
+        #question_post function posts DSA, whereas riddle_of_theday.question_post posts riddles            
 
 #Make sure bot is online.
 @Bot.event
@@ -120,8 +145,23 @@ async def on_ready():
     await task.start()
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #Reads for commands, which includes adding questions and testing
+
+#Enforcing command usage in bot-commands, bypass for admins
+def isallowed(inter):
+    channel = inter.channel
+    member = inter.user
+    has_bypass_permission = any(role.name in ADMIN_ROLE_NAME for role in member.roles)
+    is_bot_commands_channel = channel.name == 'bot-commands'
+
+    # If the member does not have admin/moderator roles and is not in #bot-commands, deny access
+    if not has_bypass_permission and not is_bot_commands_channel:
+        return False
+    return True
+
+usagewarn = "You cannot use this command outside the #bot-commands channel"
         
-@Bot.slash_command(name="qotd", description="Sends QOTD for testing")
+
+@Bot.slash_command(name="qotd", description="Sends daily QOTD, admin only")
 @commands.has_permissions(administrator=True)
 async def send(inter: disnake.ApplicationCommandInteraction):
     await inter.response.defer()
@@ -148,22 +188,24 @@ async def send(inter: disnake.ApplicationCommandInteraction):
         await inter.edit_original_response(embed=error_embed)
 
 #riddle posting
-@Bot.slash_command(name="riddle", description="Sends daily riddle for testing")
-@commands.has_permissions(administrator=True)
+@Bot.slash_command(name="riddle", description="Sends a riddle on a topic")
 async def send(inter: disnake.ApplicationCommandInteraction,subject):
-    await inter.response.defer()
     
+    if (not isallowed(inter)):
+        await inter.send(usagewarn,ephemeral=True)
+        return
+    await inter.response.defer()
     try:
         channel = inter.channel
         if channel is None:
             raise ValueError(f"Channel  not found")
 
         # Assume riddle_of_theday.question_post(channel) is a function that posts the riddle
-        await riddle_of_theday.question_post(channel,subject)
+        await riddle_of_theday.question_post(channel,subject,False)
 
         embed = disnake.Embed(
             title="Success!",
-            description="Sent a riddle.",
+            description="Sent a riddle",
             color=embedcolor,
         )
         
@@ -180,7 +222,7 @@ async def send(inter: disnake.ApplicationCommandInteraction,subject):
 #==================================================================================================Links=======================================================================================
 #reduce redundancy with global_options
 global_options = links.global_options
-from links import handle_insta,handle_twitter,handle_whatsapp,handle_discord,handle_nas,handle_linkedin,handle_linktree
+from links import handle_insta,handle_twitter,handle_whatsapp,handle_discord,handle_nas,handle_linkedin,handle_linktree,handle_github
 # Event listener for select menu interactions
 @Bot.event
 async def on_dropdown(inter: disnake.MessageInteraction):
@@ -197,6 +239,8 @@ async def on_dropdown(inter: disnake.MessageInteraction):
             await handle_whatsapp(inter)
         elif value == "discord-linkspanel":
             await handle_discord(inter)
+        elif value == "github-linkspanel":
+            await handle_github(inter)
         elif value == "nasio-linkspanel":
             await handle_nas(inter)
         elif value == "linkedin-linkspanel":
@@ -231,7 +275,7 @@ async def links(inter: disnake.ApplicationCommandInteraction):
     # Send the response with the embed and action row
     await inter.response.send_message(embed=embed, components=[action_row])
 
-@Bot.slash_command(name="say", description="Send a message containing the value")
+@Bot.slash_command(name="say", description="Send a message in a channel, (admin only)")
 @commands.has_permissions(administrator=True)  # Require admin permissions
 async def say(inter: disnake.ApplicationCommandInteraction, channel_id , message: str):
     channel = Bot.get_channel(channel_id)
@@ -266,7 +310,7 @@ async def say_error(inter: disnake.ApplicationCommandInteraction, error):
         )
         await inter.send(embed=embed)
 
-@Bot.slash_command(name="summarise", description="Summarise chat upto a week")
+@Bot.slash_command(name="summarise", description="Summarise chat upto a week - admin only")
 @commands.has_permissions(administrator=True) 
 async def summarise(inter, channel_id):
     await inter.response.defer()  # Defer the interaction first
@@ -303,10 +347,80 @@ async def say_error(inter: disnake.ApplicationCommandInteraction, error):
     if isinstance(error, commands.MissingPermissions):
         embed = disnake.Embed(
             title="Permission Denied!",
-            description="You do not have permission to use this command.",
+            description="This command is admin-only.",
             color=0xff0000,
         )
         await inter.send(embed=embed)
+
+def is_invite_link(content):
+    return "discord.gg" in content or "discord.com/invite" in content
+
+@Bot.event
+async def on_message(message):
+    if message.author.bot:
+        return
+    
+    if is_invite_link(message.content):
+        admin_role = disnake.utils.get(message.guild.roles, name=ADMIN_ROLE_NAME)
+        print(message.author.roles)
+        print(admin_role)
+        if admin_role in message.author.roles:
+            print("Link sent by admin")
+        else:
+            await message.delete()
+            await message.channel.send(f"{message.author.mention}, invite links are not allowed. Please refrain from posting them.")
+    
+    # Ensure commands still work
+    await Bot.process_commands(message)
+
+@Bot.slash_command(name="ping", description="Get ping in ms")
+async def ping(inter:disnake.ApplicationCommandInteraction):
+    if (not isallowed(inter)):
+        await inter.send(usagewarn,ephemeral=True)
+        return
+    await inter.response.defer()
+    latency = round(Bot.latency * 1000)  # Convert latency to milliseconds
+    await inter.send(f"Pong! 🏓 {latency}ms")
+
+#Meme    
+@Bot.slash_command(name="meme",description="Programming humour")
+async def meme(inter:disnake.ApplicationCommandInteraction):
+    await inter.response.defer()
+    channel = inter.channel
+    member = inter.user
+    has_bypass_permission = any(role.name in ADMIN_ROLE_NAME for role in member.roles)
+    is_bot_commands_channel = channel.name == 'memes'
+ 
+    if not has_bypass_permission and not is_bot_commands_channel:
+        await inter.send("You cannot use this command outside of #memes",ephemeral=True)
+        return 
+    
+    embed = postmeme(inter.channel)
+     
+    await inter.send(embed=embed)
+
+@Bot.slash_command(name="ques",description="Test yourself on a topic, any question ")
+async def ques(ctx:disnake.ApplicationCommandInteraction,topic):
+    if (not isallowed(ctx)):
+        await ctx.send(usagewarn,ephemeral=True)
+        return
+    ctx.response.defer()
+    promt = "send me a " + topic + " question to solve"
+  
+    text = await riddle_of_theday.generate_response_with_text(promt)
+    messages = []
+    
+    
+    for i in range(0, len(text), 1700):
+      sub_message = text[i:i + 1700]
+      messages.append(sub_message)
+
+    # Send each part as a separate message
+    for string in messages:
+      await ctx.channel.send(string)
+
+
+
     
 Bot.run(TOKEN)
 

@@ -94,7 +94,7 @@ def remove_question(qotd):
 progress = 0
 #===============================================================================Daily Riddle posting=======================================================================
  
-async def question_post(channel, subject):
+async def question_post(channel, subject,daily=True):
     """
     Parameters:
     - channel: The channel where the message will be sent.
@@ -107,7 +107,13 @@ async def question_post(channel, subject):
     #     raise ValueError("Invalid subject. Allowed subjects are: 'Web Development', 'Cybersecurity', 'DSA'.")
 
     # Create the cleaned text based on the subject
-    cleaned_text = f"send a daily riddle on the following topic: {subject}. Do not give the answer, only the question. The title should be \"Daily riddle - {subject}\":"
+    #if user query, Riddle:{riddle text}
+    riddletext = "Daily Riddle"
+    if daily == False:
+       riddletext = "Riddle"
+
+    cleaned_text = f"send a daily riddle on the following topic: {subject}. Do not give the answer, only the question. The title should be \"{riddletext} - {subject}\":"
+    
     
     # Generate the response text
     response_text = await generate_response_with_text(cleaned_text)
